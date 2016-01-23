@@ -526,7 +526,7 @@ void lovefx::rt::destroy(LFX_rt& rt)
 // blur
 void lovefx::pp::create(LFX_blur_pass& bp, LFX_quad quad)
 {
-    program::createFromFiles(bp.program, "..\\..\\res\\shaders\\fs.vs", 0, 0, 0, "..\\..\\res\\shaders\\blur_separate_g11.fs", 0);
+    program::createFromFiles(bp.program, "effects\\res\\shaders\\fs.vs", 0, 0, 0, "effects\\res\\shaders\\blur_separate_g11.fs", 0);
     program::log(bp.program);
     program::location(bp.program, "tex", bp.uloc_tex);
     program::location(bp.program, "uRes", bp.uloc_resolution);
@@ -553,7 +553,7 @@ void lovefx::pp::destroy(LFX_blur_pass& bp)
 // vignette
 void lovefx::pp::create(LFX_vignette_pass& vp, LFX_quad quad)
 {
-    program::createFromFiles(vp.program, "..\\..\\res\\shaders\\fs.vs", 0, 0, 0, "..\\..\\res\\shaders\\vignette.fs", 0);
+    program::createFromFiles(vp.program, "effects\\res\\shaders\\fs.vs", 0, 0, 0, "effects\\res\\shaders\\vignette.fs", 0);
     lovefx::program::location(vp.program, "tex", vp.location[vp.TEX]);
     vp.quad = quad;
     if (!vp.quad)

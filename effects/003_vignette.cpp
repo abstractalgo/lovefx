@@ -29,7 +29,7 @@ using namespace lovefx;
 
 void InitApp()
 {
-    perfMarkerStart("Init");
+    PerfMarker("Init", 0);
     // setup
     lovefx::utils::getResolution(width, height);
     glClearColor(0.4, 0.4, 0.4, 1.0);
@@ -42,7 +42,7 @@ void InitApp()
     fbo::create(width, height, fbo_fg, rb_fg, tex_fg);
 
     // create programs
-    program::createFromFiles(prog_filmgrain, "res\\shaders\\fs.vs", 0, 0, 0, "res\\shaders\\filmgrain.fs", 0);
+    program::createFromFiles(prog_filmgrain, "effects\\res\\shaders\\fs.vs", 0, 0, 0, "effects\\res\\shaders\\filmgrain.fs", 0);
     program::location(prog_filmgrain, "tex", tex_loc_fg);
     program::location(prog_filmgrain, "tSize", tSize_loc);
     program::location(prog_filmgrain, "colored", colored_loc);
@@ -52,7 +52,8 @@ void InitApp()
     program::location(prog_filmgrain, "grainamount", grainamount_loc);
     program::location(prog_filmgrain, "timer", timer_loc);
 
-    program::createFromFiles(prog_vignette, "res\\shaders\\fs.vs", 0, 0, 0, "res\\shaders\\vignette.fs", 0);
+    program::createFromFiles(prog_vignette, "effects\\res\\shaders\\fs.vs", 0, 0, 0, "effects\\res\\shaders\\vignette.fs", 0);
+    program::log(prog_vignette);
     lovefx::program::location(prog_vignette, "tex", tex_loc_vig);
     
     pp::create(vignettePass, quad);
@@ -66,42 +67,43 @@ void InitApp()
     TwAddVarRW(bar, "Lum amount", TW_TYPE_FLOAT, &lumamount, " min=0 max=1 step=0.01 ");
     TwAddVarRW(bar, "Grain amount", TW_TYPE_FLOAT, &grainamount, " min=0 max=1 step=0.01 ");
 #endif
-    
-    perfMarkerEnd("/Init");
 }
 
 void RenderApp()
 {
-    perfMarkerStart("Frame");
+    PerfMarker("Frame", 0);
+
     // draw scene
-    perfMarkerStart("Scene");
-    fbo::bind_clear(fbo_col);
-    glColor3f(0.8, 0.8, 0.8);
-    lovefx::utils::drawTris2f(tri_coord, 1);
-    glColor3f(0.3, 0.2, 0.4);
-    lovefx::utils::drawTris2f(tri_coord+6, 1);
-    perfMarkerEnd("/Scene");
+    {
+        PerfMarker("Scene", 0);
+        fbo::bind_clear(fbo_col);
+        glColor3f(0.8, 0.8, 0.8);
+        lovefx::utils::drawTris2f(tri_coord, 1);
+        glColor3f(0.3, 0.2, 0.4);
+        lovefx::utils::drawTris2f(tri_coord + 6, 1);
+    }
     // draw fullscreen quad with filmgrain shader
-    perfMarkerStart("Filmgrain");
-    fbo::bind_clear(fbo_fg);
-    program::use(prog_filmgrain);
-    glBindTexture(GL_TEXTURE_2D, tex_col);
-    glUniform1i(tex_loc_fg, 0);
-    glUniform2f(tSize_loc, (float)width, (float)height);
-    glUniform1f(colored_loc, colored);
-    glUniform1f(coloramount_loc, coloramount);
-    glUniform1f(grainsize_loc, grainsize);
-    glUniform1f(lumamount_loc, lumamount);
-    glUniform1f(grainamount_loc, grainamount);
-    glUniform1f(timer_loc, ::timer+=0.01);
-    lovefx::utils::drawFSQuad(quad);
-    perfMarkerEnd("/Filmgrain");
+    {
+        PerfMarker("Filmgrain", 0);
+        fbo::bind_clear(fbo_fg);
+        program::use(prog_filmgrain);
+        glBindTexture(GL_TEXTURE_2D, tex_col);
+        glUniform1i(tex_loc_fg, 0);
+        glUniform2f(tSize_loc, (float)width, (float)height);
+        glUniform1f(colored_loc, colored);
+        glUniform1f(coloramount_loc, coloramount);
+        glUniform1f(grainsize_loc, grainsize);
+        glUniform1f(lumamount_loc, lumamount);
+        glUniform1f(grainamount_loc, grainamount);
+        glUniform1f(timer_loc, ::timer += 0.01);
+        lovefx::utils::drawFSQuad(quad);
+    }
     // draw fullscreen quad with vignette shader
-    perfMarkerStart("Vignette");
-    fbo::use(0);
-    pp::draw(vignettePass);
-    perfMarkerEnd("/Vignette");
-    perfMarkerEnd("/Frame");
+    {
+        PerfMarker("Vignette", 0);
+        fbo::use(0);
+        pp::draw(vignettePass);
+    }
 }
 
 void CleanupApp()
