@@ -85,6 +85,7 @@
     <ClInclude Include="startupfx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="006_bokeh.cpp" />
     <ClCompile Include="effects\001_simple.cpp" />
     <ClCompile Include="effects\002_blur.cpp" />
     <ClCompile Include="effects\003_vignette.cpp" />
