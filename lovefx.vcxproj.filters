@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="backend.hpp">
+      <Filter>lovefx</Filter>
+    </ClInclude>
+    <ClInclude Include="lovefx.hpp">
+      <Filter>lovefx</Filter>
+    </ClInclude>
+    <ClInclude Include="startupfx.h">
+      <Filter>lovefx</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="effects">
+      <UniqueIdentifier>{89a765aa-ee49-43c5-b69f-992bebc4baa0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lovefx">
+      <UniqueIdentifier>{b08490f2-23d4-4e57-b4ec-1cff1d747811}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="effects\001_simple.cpp">
+      <Filter>effects</Filter>
+    </ClCompile>
+    <ClCompile Include="effects\002_blur.cpp">
+      <Filter>effects</Filter>
+    </ClCompile>
+    <ClCompile Include="effects\003_vignette.cpp">
+      <Filter>effects</Filter>
+    </ClCompile>
+    <ClCompile Include="effects\004_bloom.cpp">
+      <Filter>effects</Filter>
+    </ClCompile>
+    <ClCompile Include="effects\005_parallax.cpp">
+      <Filter>effects</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
