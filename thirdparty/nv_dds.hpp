@@ -1297,4 +1297,3 @@ void CSurface::clear() {
         m_pixels = NULL;
     }
 }
-\
