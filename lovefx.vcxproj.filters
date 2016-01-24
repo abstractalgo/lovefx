@@ -35,7 +35,7 @@
     <ClCompile Include="effects\005_parallax.cpp">
       <Filter>effects</Filter>
     </ClCompile>
-    <ClCompile Include="006_bokeh.cpp">
+    <ClCompile Include="effects\006_bokeh.cpp">
       <Filter>effects</Filter>
     </ClCompile>
   </ItemGroup>

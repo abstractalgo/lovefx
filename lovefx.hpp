@@ -23,19 +23,25 @@ typedef GLuint LFXprogram;
 typedef GLuint LFXfbo;
 typedef GLuint LFXrb;
 typedef GLuint LFXtex2d;
-typedef GLuint LFXtex2d;
-typedef GLuint LFX_quad;
+typedef GLint LFXuloc;
 
-typedef struct LFX_rt_tag
+typedef struct LFXrendertarget_tag
 {
     GLuint fbo, rb, col0, col1, col2, col3;
-} LFX_rt;
+} LFXrendertarget;
+
+typedef struct LFXmesh_tag
+{
+    GLuint vao;
+    GLsizei count;
+    std::vector<GLuint> vbos;
+} LFXmesh;
 
 typedef struct LFX_blur_pass_tag
 {
     GLuint program;
     GLint uloc_tex, uloc_resolution, uloc_filter;
-    LFX_quad quad;
+    GLuint quad;
     GLuint uTex;
     float uXY[2];
     GLint uRes[2];
@@ -47,7 +53,7 @@ typedef struct LFX_vignette_pass_tag
     GLint location[CNT];
     GLuint program;
     GLint uloc_tex;
-    LFX_quad quad;
+    GLuint quad;
     GLuint uTex;
 } LFX_vignette_pass;
 
@@ -57,7 +63,7 @@ private:
     GLuint program;
     GLint uloc_tex, uloc_tSize, uloc_colored, uloc_coloramount, uloc_grainsize, uloc_lumamount, uloc_grainamount, uloc_timer;
 public:
-    LFX_quad quad;
+    GLuint quad;
     GLuint from, to;
     float uColored = 1;
     float uColorAmount = 0.25;
@@ -73,18 +79,10 @@ namespace lovefx
 {
     namespace file
     {
-        HRESULT load(const char* filename, std::string& content);
+        HRESULT loadTXT(const char* filename, std::string& content);
         HRESULT loadBMP(const char* filename, GLenum target, GLuint image);
-        //HRESULT loadPNG(const char* filename, GLenum target, GLuint image);
-        typedef struct
-        {
-            unsigned char imageTypeCode;
-            short int imageWidth;
-            short int imageHeight;
-            unsigned char bitCount;
-            unsigned char *imageData;
-        } TGAFILE;
         HRESULT loadTGA(const char* filename, GLenum target, GLuint image);
+        //HRESULT loadPNG(const char* filename, GLenum target, GLuint image);
     }
     namespace shader
     {
@@ -133,25 +131,33 @@ namespace lovefx
     }
     namespace rt
     {
-        void create(LFX_rt& rt, GLint width, GLint height, GLuint col_cnt = 1);
-        void destroy(LFX_rt& rt);
+        void create(LFXrendertarget& rt, GLint width, GLint height, GLuint col_cnt = 1);
+        void destroy(LFXrendertarget& rt);
     }
     namespace pp
     {
         // blur
-        void create(LFX_blur_pass& bp, LFX_quad quad = 0);
+        void create(LFX_blur_pass& bp, GLuint quad = 0);
         void draw(LFX_blur_pass& bp);
         void destroy(LFX_blur_pass& bp);
 
         // vignette
-        void create(LFX_vignette_pass& vp, LFX_quad = 0);
+        void create(LFX_vignette_pass& vp, GLuint quad = 0);
         void draw(LFX_vignette_pass& vp);
         void destroy(LFX_vignette_pass& vp);
 
         // filmgrain
-        void create(LFX_filmgrain_pass& fp, LFX_quad = 0);
+        void create(LFX_filmgrain_pass& fp, GLuint quad = 0);
         void draw(LFX_filmgrain_pass& fp);
         void destroy(LFX_filmgrain_pass& fp);
+    }
+    namespace mesh
+    {
+        void create(LFXmesh& mesh);
+        void addVertexBuffer(LFXmesh& mesh, const char* name, GLsizei bytesize, GLuint program, GLuint componentCnt = 3, GLenum componentType = GL_FLOAT, GLvoid* data = 0);
+        void addIndexBuffer(LFXmesh& mesh, GLsizei bytesize, GLvoid* data = 0);
+        void draw(LFXmesh& mesh);
+        void destroy(LFXmesh& mesh);
     }
     namespace utils
     {
@@ -176,7 +182,7 @@ namespace lovefx
     }
 }
 
-HRESULT lovefx::file::load(const char* filename, std::string& content)
+HRESULT lovefx::file::loadTXT(const char* filename, std::string& content)
 {
     if (!filename)
         return E_FAIL;
@@ -247,10 +253,13 @@ HRESULT lovefx::file::loadBMP(const char* filename, GLenum target, GLuint image)
 
     return S_OK;
 }
-
 HRESULT lovefx::file::loadTGA(const char* filename, GLenum target, GLuint image)
 {
-    TGAFILE tgaFile;
+    unsigned char imageTypeCode;
+    short int imageWidth;
+    short int imageHeight;
+    unsigned char bitCount;
+    unsigned char *imageData;
 
     FILE *filePtr;
     unsigned char ucharBad;
@@ -271,11 +280,11 @@ HRESULT lovefx::file::loadTGA(const char* filename, GLenum target, GLuint image)
     fread(&ucharBad, sizeof(unsigned char), 1, filePtr);
 
     // Which type of image gets stored in imageTypeCode.
-    fread(&tgaFile.imageTypeCode, sizeof(unsigned char), 1, filePtr);
+    fread(&imageTypeCode, sizeof(unsigned char), 1, filePtr);
 
     // For our purposes, the type code should be 2 (uncompressed RGB image)
     // or 3 (uncompressed black-and-white images).
-    if (tgaFile.imageTypeCode != 2 && tgaFile.imageTypeCode != 3)
+    if (imageTypeCode != 2 && imageTypeCode != 3)
     {
         fclose(filePtr);
         return E_FAIL;
@@ -289,24 +298,24 @@ HRESULT lovefx::file::loadTGA(const char* filename, GLenum target, GLuint image)
     fread(&sintBad, sizeof(short int), 1, filePtr);
 
     // Read the image's width and height.
-    fread(&tgaFile.imageWidth, sizeof(short int), 1, filePtr);
-    fread(&tgaFile.imageHeight, sizeof(short int), 1, filePtr);
+    fread(&imageWidth, sizeof(short int), 1, filePtr);
+    fread(&imageHeight, sizeof(short int), 1, filePtr);
 
     // Read the bit depth.
-    fread(&tgaFile.bitCount, sizeof(unsigned char), 1, filePtr);
+    fread(&bitCount, sizeof(unsigned char), 1, filePtr);
 
     // Read one byte of data we don't need.
     fread(&ucharBad, sizeof(unsigned char), 1, filePtr);
 
     // Color mode -> 3 = BGR, 4 = BGRA.
-    colorMode = tgaFile.bitCount / 8;
-    imageSize = tgaFile.imageWidth * tgaFile.imageHeight * colorMode;
+    colorMode = bitCount / 8;
+    imageSize = imageWidth * imageHeight * colorMode;
 
     // Allocate memory for the image data.
-    tgaFile.imageData = (unsigned char*)malloc(sizeof(unsigned char)*imageSize);
+    imageData = (unsigned char*)malloc(sizeof(unsigned char)*imageSize);
 
     // Read the image data.
-    fread(tgaFile.imageData, sizeof(unsigned char), imageSize, filePtr);
+    fread(imageData, sizeof(unsigned char), imageSize, filePtr);
 
     // Change from BGR to RGB so OpenGL can read the image data.
     /*for (int imageIdx = 0; imageIdx < imageSize; imageIdx += colorMode)
@@ -319,13 +328,11 @@ HRESULT lovefx::file::loadTGA(const char* filename, GLenum target, GLuint image)
     fclose(filePtr);
 
     glBindTexture(target, image);
-    glTexImage2D(target, 0, GL_RGB, tgaFile.imageWidth, tgaFile.imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, tgaFile.imageData);
+    glTexImage2D(target, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, imageData);
 
-    delete[] tgaFile.imageData;
+    delete[] imageData;
 
     return S_OK;
-
-    
 }
 
 void lovefx::shader::createFromSource(GLuint& shdr, GLenum type, const char* source)
@@ -337,7 +344,7 @@ void lovefx::shader::createFromSource(GLuint& shdr, GLenum type, const char* sou
 void lovefx::shader::createFromFile(GLuint& shdr, GLenum type, const char* filename)
 {
     std::string source;
-    lovefx::file::load(filename, source);
+    lovefx::file::loadTXT(filename, source);
     lovefx::shader::createFromSource(shdr, type, source.c_str());
 }
 void lovefx::shader::log(GLuint shdr)
@@ -592,7 +599,7 @@ void lovefx::fbo::destroy(GLuint& fbo, GLuint& rb, GLuint& color0, GLuint& color
     fbo = 0;
 }
 
-void lovefx::rt::create(LFX_rt& rt, GLint width, GLint height, GLuint col_cnt)
+void lovefx::rt::create(LFXrendertarget& rt, GLint width, GLint height, GLuint col_cnt)
 {
     rt.col0 = rt.col1 = rt.col2 = rt.col3 = rt.fbo = rt.rb = 0;
     if (1 == col_cnt)
@@ -612,13 +619,13 @@ void lovefx::rt::create(LFX_rt& rt, GLint width, GLint height, GLuint col_cnt)
         lovefx::fbo::create(width, height, rt.fbo, rt.rb, rt.col0, rt.col1, rt.col2, rt.col3);
     }
 }
-void lovefx::rt::destroy(LFX_rt& rt)
+void lovefx::rt::destroy(LFXrendertarget& rt)
 {
     lovefx::fbo::destroy(rt.fbo, rt.rb, rt.col0, rt.col1, rt.col2, rt.col3);
 }
 
 // blur
-void lovefx::pp::create(LFX_blur_pass& bp, LFX_quad quad)
+void lovefx::pp::create(LFX_blur_pass& bp, GLuint quad)
 {
     program::createFromFiles(bp.program, "effects\\res\\shaders\\fs.vs", 0, 0, 0, "effects\\res\\shaders\\blur_separate_g11.fs", 0);
     program::log(bp.program);
@@ -645,7 +652,7 @@ void lovefx::pp::destroy(LFX_blur_pass& bp)
     utils::destroyFSQuad(bp.quad);
 }
 // vignette
-void lovefx::pp::create(LFX_vignette_pass& vp, LFX_quad quad)
+void lovefx::pp::create(LFX_vignette_pass& vp, GLuint quad)
 {
     program::createFromFiles(vp.program, "effects\\res\\shaders\\fs.vs", 0, 0, 0, "effects\\res\\shaders\\vignette.fs", 0);
     lovefx::program::location(vp.program, "tex", vp.location[vp.TEX]);
@@ -666,7 +673,7 @@ void lovefx::pp::destroy(LFX_vignette_pass& vp)
 
 }
 // filmgrain
-void lovefx::pp::create(LFX_filmgrain_pass& fp, LFX_quad)
+void lovefx::pp::create(LFX_filmgrain_pass& fp, GLuint)
 {
 
 }
@@ -677,6 +684,47 @@ void lovefx::pp::draw(LFX_filmgrain_pass& fp)
 void lovefx::pp::destroy(LFX_filmgrain_pass& fp)
 {
 
+}
+
+void lovefx::mesh::create(LFXmesh& mesh)
+{
+    glGenVertexArrays(1, &mesh.vao);
+}
+void lovefx::mesh::addVertexBuffer(LFXmesh& mesh, const char* name, GLsizei bytesize, GLuint program, GLuint componentCnt, GLenum componentType, GLvoid* data)
+{
+    glBindVertexArray(mesh.vao);
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, bytesize, data, GL_STATIC_DRAW);
+    glVertexAttribPointer(mesh.vbos.size(), componentCnt, componentType, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(mesh.vbos.size());
+    glBindAttribLocation(program, mesh.vbos.size(), name);
+    mesh.vbos.push_back(vbo);
+}
+void lovefx::mesh::addIndexBuffer(LFXmesh& mesh, GLsizei bytesize, GLvoid* data)
+{
+    glBindVertexArray(mesh.vao);
+    GLuint ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, bytesize, data, GL_STATIC_DRAW);
+    mesh.vbos.push_back(ibo);
+}
+void lovefx::mesh::draw(LFXmesh& mesh)
+{
+    glBindVertexArray(mesh.vao);
+    glDrawElements(
+        GL_TRIANGLES,       // mode
+        mesh.count,         // count
+        GL_UNSIGNED_INT,    // type
+        (void*)0            // element array buffer offset
+        );
+}
+void lovefx::mesh::destroy(LFXmesh& mesh)
+{
+    glDeleteBuffers(mesh.vbos.size(), mesh.vbos.data());
+    glDeleteVertexArrays(1, &mesh.vao);
 }
 
 void lovefx::utils::getResolution(GLint& w, GLint& h)

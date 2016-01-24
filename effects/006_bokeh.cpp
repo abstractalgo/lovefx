@@ -2,19 +2,15 @@
 #include <iostream>
 #if (STARTUPFX_ID==6)
 #include "..\\lovefx.hpp"
-#include "thirdparty\\tiny_obj_loader.hpp"
-#include "thirdparty\\nv_dds.hpp"
+#include "..\\thirdparty\\tiny_obj_loader.hpp"
 
 
-//TwBar *myBar;
-GLuint quad;
-GLuint prog;
-GLint texloc;
-GLuint texobj;
-
-GLuint* vaos;
-GLsizei* vao_sizes;
-size_t shape_cnt;
+//TwBar*      myBar;
+LFXprogram  prog;
+LFXuloc     texloc;
+LFXtex2d    texobj;
+size_t      shape_cnt;
+LFXmesh*    meshes;
 
 using namespace lovefx;
 
@@ -29,9 +25,6 @@ void InitApp()
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     file::loadTGA("effects\\res\\sponza_details_diff.tga", GL_TEXTURE_2D, texobj);
     //file::loadBMP("effects\\res\\hehe.bmp", GL_TEXTURE_2D, texobj);
-    //CDDSImage image;
-    //image.load("effects\\res\\textures\\sponza_curtain_green_diff.dds");
-    //image.upload_texture2D();
 
     program::createFromFiles(prog, "effects\\res\\shaders\\sponza.vs", 0, 0, 0, "effects\\res\\shaders\\sponza.fs", 0);
     program::log(prog);
@@ -47,69 +40,39 @@ void InitApp()
     if (!ret) { exit(1); }
     std::cout << "# of shapes    : " << shapes.size() << std::endl;
     std::cout << "# of materials : " << materials.size() << std::endl;
+    for (size_t i = 0; i < materials.size(); i++)
+    {
+        printf("material[%ld].name = %s\n", i, materials[i].name.c_str());
+        printf("  material.map_Kd = %s\n", materials[i].diffuse_texname.c_str());
+    }
     perfMarkerEnd();
 
     perfMarkerStartEx("Buidling OGL data", 0xFF8888FF);
     shape_cnt = shapes.size();
-    vaos = new GLuint[shape_cnt];
-    vao_sizes = new GLsizei[shape_cnt];
-    glGenVertexArrays(shape_cnt, vaos);
+    meshes = new LFXmesh[shape_cnt];
     for (size_t i = 0; i < shape_cnt; i++)
     {
-        glBindVertexArray(vaos[i]);
-
-        GLuint vbo_pos;
-        GLuint vbo_nor;
-        GLuint vbo_uv;
-        GLuint vbo_idx;
-
-        glGenBuffers(1, &vbo_pos);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_pos);
-        glBufferData(GL_ARRAY_BUFFER, shapes[i].mesh.positions.size() * sizeof(float), shapes[i].mesh.positions.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(0);
-        glBindAttribLocation(prog, 0, "iPos");
-
-        glGenBuffers(1, &vbo_nor);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_nor);
-        glBufferData(GL_ARRAY_BUFFER, shapes[i].mesh.normals.size() * sizeof(float), shapes[i].mesh.normals.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(1);
-        glBindAttribLocation(prog, 1, "iNor");
-
-        glGenBuffers(1, &vbo_uv);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_uv);
-        glBufferData(GL_ARRAY_BUFFER, shapes[i].mesh.texcoords.size() * sizeof(float), shapes[i].mesh.texcoords.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(2);
-        glBindAttribLocation(prog, 2, "iUV");
-
-        glGenBuffers(1, &vbo_idx);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_idx);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, shapes[i].mesh.indices.size() * sizeof(unsigned int), shapes[i].mesh.indices.data(), GL_STATIC_DRAW);
-
-        vao_sizes[i] = shapes[i].mesh.indices.size();
+        LFXmesh& mesh = meshes[i];
+        mesh::create(mesh);
+        mesh::addVertexBuffer(mesh, "iPos", shapes[i].mesh.positions.size() * sizeof(float), prog, 3, GL_FLOAT, shapes[i].mesh.positions.data());
+        mesh::addVertexBuffer(mesh, "iNor", shapes[i].mesh.normals.size() * sizeof(float), prog, 3, GL_FLOAT, shapes[i].mesh.normals.data());
+        mesh::addVertexBuffer(mesh, "iUV", shapes[i].mesh.texcoords.size() * sizeof(float), prog, 2, GL_FLOAT, shapes[i].mesh.texcoords.data());
+        mesh::addIndexBuffer(mesh, shapes[i].mesh.indices.size() * sizeof(unsigned int), shapes[i].mesh.indices.data());
+        mesh.count = shapes[i].mesh.indices.size();
     }
     perfMarkerEnd();
 
     glClearColor(0.0f, 0.2f, 0.4f, 1.0f);
-    glUseProgram(prog);
+    program::use(prog);
 }
 
 void RenderApp()
 {
     perfMarkerStart("Frame");
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    for (size_t i = 0; i < shape_cnt; i++)
+    for (size_t i = 0; i < 20; i++)
     {
-        glBindVertexArray(vaos[i]);
-
-        glDrawElements(
-            GL_TRIANGLES,       // mode
-            vao_sizes[i],       // count
-            GL_UNSIGNED_INT,    // type
-            (void*)0            // element array buffer offset
-            );
+        mesh::draw(meshes[i]);
     }
     perfMarkerEnd();
 }
