@@ -13,59 +13,48 @@ GLint texloc;
 GLuint texobj;
 
 GLuint* vaos;
-std::vector<tinyobj::shape_t> shapes;
-std::vector<tinyobj::material_t> materials;
+GLsizei* vao_sizes;
+size_t shape_cnt;
 
 using namespace lovefx;
 
-struct v3
-{
-    float x, y, z;
-};
-struct vertex
-{
-    size_t id;
-    float x, y, z;
-    float u, v;
-    v3 n;
-};
-
 void InitApp()
 {
+    PerfMarker("Init", 0xFFFF0000);
     //myBar = TwNewBar("Simple sample bar");
-    glClearColor(0.0f, 0.2f, 0.4f, 1.0f);
 
     glGenTextures(1, &texobj);
     glBindTexture(GL_TEXTURE_2D, texobj);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
     file::loadTGA("effects\\res\\sponza_details_diff.tga", GL_TEXTURE_2D, texobj);
     //file::loadBMP("effects\\res\\hehe.bmp", GL_TEXTURE_2D, texobj);
-
     //CDDSImage image;
     //image.load("effects\\res\\textures\\sponza_curtain_green_diff.dds");
     //image.upload_texture2D();
 
-    //lovefx::utils::initFSQuad(quad);
     program::createFromFiles(prog, "effects\\res\\shaders\\sponza.vs", 0, 0, 0, "effects\\res\\shaders\\sponza.fs", 0);
     program::log(prog);
     //program::location(prog, "tex", texloc);
 
+    perfMarkerStartEx("OBJ parsing", 0xFF88FF88);
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
     std::string inputfile = "effects\\res\\crytek_sponza\\sponza.obj";
-
     std::string err;
     bool ret = tinyobj::LoadObj(shapes, materials, err, inputfile.c_str(), "effects\\res\\crytek_sponza\\");
-
     if (!err.empty()) { std::cerr << err << std::endl; }
     if (!ret) { exit(1); }
-
     std::cout << "# of shapes    : " << shapes.size() << std::endl;
     std::cout << "# of materials : " << materials.size() << std::endl;
+    perfMarkerEnd();
 
-    vaos = new GLuint[shapes.size()];
-    glGenVertexArrays(shapes.size(), vaos);
-    for (size_t i = 0; i < 20; i++)
+    perfMarkerStartEx("Buidling OGL data", 0xFF8888FF);
+    shape_cnt = shapes.size();
+    vaos = new GLuint[shape_cnt];
+    vao_sizes = new GLsizei[shape_cnt];
+    glGenVertexArrays(shape_cnt, vaos);
+    for (size_t i = 0; i < shape_cnt; i++)
     {
         glBindVertexArray(vaos[i]);
 
@@ -98,25 +87,31 @@ void InitApp()
         glGenBuffers(1, &vbo_idx);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_idx);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, shapes[i].mesh.indices.size() * sizeof(unsigned int), shapes[i].mesh.indices.data(), GL_STATIC_DRAW);
-    }
 
+        vao_sizes[i] = shapes[i].mesh.indices.size();
+    }
+    perfMarkerEnd();
+
+    glClearColor(0.0f, 0.2f, 0.4f, 1.0f);
     glUseProgram(prog);
 }
 
 void RenderApp()
 {
+    perfMarkerStart("Frame");
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    for (size_t i = 0; i < 20; i++)
+    for (size_t i = 0; i < shape_cnt; i++)
     {
         glBindVertexArray(vaos[i]);
 
         glDrawElements(
-            GL_TRIANGLES,                       // mode
-            shapes[i].mesh.indices.size(),      // count
-            GL_UNSIGNED_INT,                    // type
-            (void*)0                            // element array buffer offset
+            GL_TRIANGLES,       // mode
+            vao_sizes[i],       // count
+            GL_UNSIGNED_INT,    // type
+            (void*)0            // element array buffer offset
             );
     }
+    perfMarkerEnd();
 }
 
 void CleanupApp()

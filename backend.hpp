@@ -2,7 +2,7 @@
 
 // <options> ---------------------------------------------------------------------------
 #define USE_CONSOLE_BACKEND
-//#define USE_NVTX_BACKEND
+#define USE_NVTX_BACKEND
 //#define USE_ANTTWBAR_BACKEND
 #define ANIMATE_BACKEND
 // </options> --------------------------------------------------------------------------
@@ -151,7 +151,7 @@ struct PerfMarker_t
 };
 #define NVTX_B_COMBINE1(X,Y) X##Y
 #define NVTX_B_COMBINE(X,Y) NVTX_B_COMBINE1(X,Y)
-#define PerfMarker(markerName,col) PerfMarker_t NVTX_B_COMBINE(marker,__LINE__) (markerName, col)
+#define PerfMarker(markerName,col_argb) PerfMarker_t NVTX_B_COMBINE(marker,__LINE__) (markerName, col_argb)
 
 
 // loading antTweakBar libraries
@@ -286,7 +286,7 @@ HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow)
 
     // Create window
     g_hInst = hInstance;
-    RECT rc = { 0, 0, 480, 480 };
+    RECT rc = { 0, 0, 960, 640 };
     AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
     g_hWnd = CreateWindow(L"FrameWinClass", L"Frame",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
