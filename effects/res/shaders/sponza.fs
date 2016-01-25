@@ -12,7 +12,6 @@ void main()
     //frag = texture(diff_tex, uv);
     //vec3 n = nor*0.5+vec3(.5);
     frag = vec4(nor, 1.);
-    //frag = vec4(1);
     // float k = gl_FragCoord.z;
     // frag = vec4(k, k, k, 1);
 }

@@ -3,6 +3,8 @@
 #include "..\\lovefx.hpp"
 #include "..\\thirdparty\\tiny_obj_loader.hpp"
 #include "..\\aamath.hpp"
+#include "..\\thirdparty\\\glm\\glm.hpp"
+#include "..\\thirdparty\glm\gtc\matrix_transform.hpp"
 
 using namespace lovefx;
 using namespace aamath;
@@ -18,6 +20,8 @@ std::vector<tinyobj::material_t> materials;
 transform t;
 mat4 projMat, viewMat;
 float time = 0;
+
+glm::mat4 gprojMat, gviewMat;
 
 void keyDownHandler(unsigned int key)
 {
@@ -82,9 +86,10 @@ void InitApp()
     glEnable(GL_DEPTH_TEST);
     program::use(prog);
     float aspect; utils::getAspectRatio(aspect);
-    projMat.perspectiveCamera(45, aspect, 0.0001, 1000);
+    //projMat.perspectiveCamera(45, aspect, 0.0001, 1000);
+    gprojMat = glm::perspective(45.0f, aspect, 0.001f, 100.0f);
 }
-
+float h[16];
 void RenderApp()
 {
     perfMarkerStart("Frame");
@@ -92,13 +97,20 @@ void RenderApp()
     t.updateMat();
     glUniformMatrix4fv(modelMatLoc, 1, GL_FALSE, t.mat.e);
     // view
-    time += 0.03;
-    float x = cos(time) * 20.0f;
-    float z = sin(time) * 20.0f;
-    viewMat.lookAt(vec3f(x,20,z), vec3f(0, 0, 0), vec3f(0, 1, 0));
+    time += 0.003;
+    float x = cos(time) * 1.0f;
+    float z = sin(time) * 1.0f;
+
+    viewMat.lookAt(vec3f(x, 2.0f, z), vec3f(0.0f,0.0f,0.0f));
+    //viewMat.lookAtFrom(vec3f(0.0f, 0.2f, 0.0f), vec3f(x, 0.0f, z));
+
+    gviewMat = glm::lookAt(glm::vec3(x, 2, z), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+    for (int i = 0; i < 16; i++) h[i] = gviewMat[i / 4][i % 4];
+
     glUniformMatrix4fv(viewMatLoc, 1, GL_FALSE, viewMat.e);
     // projection
-    glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, projMat.e);
+    for (int i = 0; i < 16; i++) h[i] = gprojMat[i/4][i%4];
+    glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, h);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (size_t i = 0; i < meshes.size(); i++)

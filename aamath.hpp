@@ -122,7 +122,7 @@ namespace aamath
     template<typename T>
     struct vec3
     {
-        float x, y, z;
+        T x, y, z;
         // constructors
         vec3(T _x = 0, T _y = 0, T _z = 0) : x(_x), y(_y), z(_z) {}
         vec3(const vec3<T> &v) : x(v.x), y(v.y), z(v.z) {}
@@ -134,10 +134,6 @@ namespace aamath
             return *this;
         }
         // add
-        vec3<T>& operator+(const vec3<T>& v) const
-        {
-            return vec3(x + v.x, y + v.y, z + v.z);
-        }
         vec3<T>& operator+=(const vec3<T>& v)
         {
             x += v.x;
@@ -146,10 +142,6 @@ namespace aamath
             return *this;
         }
         // sub
-        vec3<T>& operator-(const vec3<T>& v) const
-        {
-            return vec3(x - v.x, y - v.y, z - v.z);
-        }
         vec3<T>& operator-=(const vec3<T>& v)
         {
             x -= v.x;
@@ -195,10 +187,10 @@ namespace aamath
         }
         vec3& normalize()
         {
-            float inv = 1.0f / len();
-            x *= inv;
-            y *= inv;
-            z *= inv;
+            float l = len();
+            x /= l;
+            y /= l;
+            z /= l;
             return *this;
         }
         vec3& abs()
@@ -212,6 +204,17 @@ namespace aamath
 
     typedef vec3<float> vec3f;
     typedef vec3<int> vec3i;
+
+    template<typename T>
+    vec3<T> operator-(const vec3<T>& a, const vec3<T>& b)
+    {
+        return vec3<T>(a.x - b.x, a.y - b.y, a.z - b.z);
+    }
+    template<typename T>
+    vec3<T> operator+(const vec3<T>& a, const vec3<T>& b)
+    {
+        return vec3<T>(a.x + b.x, a.y + b.y, a.z + b.z);
+    }
 
     template<typename T>
     float dot(const vec3<T>& a, const vec3<T>& b)
@@ -537,36 +540,9 @@ namespace aamath
             return *this;
         }
 
-        mat4& lookAt(const vec3f& eye, const vec3f& target, const vec3f& up)
+        mat4& lookAt(const vec3f& eye, const vec3f& view, const vec3f& up = vec3f(0, 1, 0))
         {
-            /*vec3f x, y, z;
-            z = (eye - target).normalize();
-            if (z.len() == 0) { z.z = 1; }
-            x = (cross(up, z)).normalize();
-            if (x.len() == 0)
-            {
-                z.x += 0.0001;
-                x = (cross(up, z)).normalize();
-            }
-            y = cross(z, x);
-
-            e[0] = x.x; e[4] = y.x; e[8] = z.x;
-            e[1] = x.y; e[5] = y.y; e[9] = z.y;
-            e[2] = x.z; e[6] = y.z; e[10] = z.z;
-
-            */
-
-            /*vec3f f = (target - eye).normalize();
-            vec3f u = vec3f(up).normalize();
-            vec3f s = cross(f, u);
-            u = cross(s, f);
-            e[0] = s.x; e[1] = s.y; e[2] = s.z; e[3] = -eye.x;
-            e[4] = u.x; e[5] = u.y; e[6] = u.z; e[7] = -eye.y;
-            e[8] = -f.x; e[9] = -f.y; e[10] = -f.z; e[11] = -eye.z;
-            e[12] = 0; e[13] = 0; e[14] = 0; e[15] = 1;
-            */
-
-            vec3f zaxis = (target - eye).normalize();
+            vec3f zaxis = (view - eye).normalize();
             vec3f xaxis = (cross(up, zaxis)).normalize();
             vec3f yaxis = cross(zaxis, xaxis);
 
@@ -574,10 +550,12 @@ namespace aamath
             e[4] = xaxis.y;             e[5] = yaxis.y;             e[6] = zaxis.y;             e[7] = 0;
             e[8] = xaxis.z;             e[9] = yaxis.z;             e[10] = zaxis.z;            e[11] = 0;
             e[12] = -dot(xaxis, eye);   e[13] = -dot(yaxis, eye);   e[14] = -dot(zaxis, eye);   e[15] = 1;
-
-            //transpose();
             return *this;
-            
+        }
+
+        mat4& lookAtFrom(const vec3f& from, const vec3f at, const vec3f& up = vec3f(0, 1, 0))
+        {
+            return lookAt(from, from-at, up);
         }
 
         vec4f operator*(vec4f& v)
