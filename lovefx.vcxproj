@@ -80,6 +80,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="aamath.hpp" />
     <ClInclude Include="backend.hpp" />
     <ClInclude Include="lovefx.hpp" />
     <ClInclude Include="startupfx.h" />

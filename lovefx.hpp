@@ -1,12 +1,17 @@
 #pragma once
 
 #include "backend.hpp"
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string>
 #include <vector>
 #include <hash_map>
+
+// =============================================================================
+// === MACROS
+// =============================================================================
 
 #define LFX_GLSL(version, shader)  "#version " #version "\n" #shader
 #define LFX_ERRCHK(glFn) \
@@ -17,6 +22,10 @@ const GLubyte* errmsg = gluErrorString(err); \
 if (err != GL_NO_ERROR)    \
     printf("ERROR: 0x%x (%s)\n%s : %d\n", err, errmsg, __FILE__, __LINE__); \
 } while (0)
+
+// =============================================================================
+// === DATATYPES
+// =============================================================================
 
 typedef GLuint LFXshader;
 typedef GLuint LFXprogram;
@@ -73,7 +82,9 @@ public:
     float uTimer = 0;
 } LFX_filmgrain_pass;
 
-
+// =============================================================================
+// === API
+// =============================================================================
 
 namespace lovefx
 {
@@ -154,7 +165,7 @@ namespace lovefx
     namespace mesh
     {
         void create(LFXmesh& mesh);
-        void addVertexBuffer(LFXmesh& mesh, const char* name, GLsizei bytesize, GLuint program, GLuint componentCnt = 3, GLenum componentType = GL_FLOAT, GLvoid* data = 0);
+        void addVertexBuffer(LFXmesh& mesh, const char* name, GLuint program, GLsizei bytesize, GLuint componentCnt = 3, GLenum componentType = GL_FLOAT, GLvoid* data = 0);
         void addIndexBuffer(LFXmesh& mesh, GLsizei bytesize, GLvoid* data = 0);
         void draw(LFXmesh& mesh);
         void destroy(LFXmesh& mesh);
@@ -181,6 +192,10 @@ namespace lovefx
         long long unsigned getFrame();
     }
 }
+
+// =============================================================================
+// === IMPLEMENTATION
+// =============================================================================
 
 HRESULT lovefx::file::loadTXT(const char* filename, std::string& content)
 {
@@ -690,7 +705,7 @@ void lovefx::mesh::create(LFXmesh& mesh)
 {
     glGenVertexArrays(1, &mesh.vao);
 }
-void lovefx::mesh::addVertexBuffer(LFXmesh& mesh, const char* name, GLsizei bytesize, GLuint program, GLuint componentCnt, GLenum componentType, GLvoid* data)
+void lovefx::mesh::addVertexBuffer(LFXmesh& mesh, const char* name, GLuint program, GLsizei bytesize, GLuint componentCnt, GLenum componentType, GLvoid* data)
 {
     glBindVertexArray(mesh.vao);
     GLuint vbo;
@@ -725,6 +740,7 @@ void lovefx::mesh::destroy(LFXmesh& mesh)
 {
     glDeleteBuffers(mesh.vbos.size(), mesh.vbos.data());
     glDeleteVertexArrays(1, &mesh.vao);
+    mesh.vao = 0;
 }
 
 void lovefx::utils::getResolution(GLint& w, GLint& h)

@@ -10,6 +10,9 @@
     <ClInclude Include="startupfx.h">
       <Filter>lovefx</Filter>
     </ClInclude>
+    <ClInclude Include="aamath.hpp">
+      <Filter>lovefx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="effects">

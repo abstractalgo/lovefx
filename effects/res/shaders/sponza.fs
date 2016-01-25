@@ -10,5 +10,7 @@ void main()
 {
     frag = vec4(1);
     //frag = texture(diff_tex, uv);
-    frag = vec4(uv, 0.5, 1.);
+    vec3 n = nor*0.5+vec3(.5);
+    frag = vec4(n, 1.);
+    frag = vec4(1);
 }
