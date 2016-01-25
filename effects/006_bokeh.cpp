@@ -7,7 +7,7 @@
 using namespace lovefx;
 using namespace aamath;
 
-TwBar*      myBar;
+//TwBar*      myBar;
 LFXprogram  prog;
 LFXuloc     texloc;
 LFXuloc     mvploc;
@@ -15,14 +15,26 @@ LFXtex2d    texobj;
 std::vector<LFXmesh> meshes;
 std::vector<tinyobj::material_t> materials;
 
-mat4f mvpMat;
+transform t;
+
+void keyDownHandler(unsigned int key)
+{
+    if (key == INPUT_KEY_LEFT)
+        t.R.y += 0.01;
+    if (key == INPUT_KEY_RIGHT)
+        t.R.y -= 0.01;
+
+    if (key == INPUT_KEY_UP)
+        t.R.x += 0.01;
+    if (key == INPUT_KEY_DOWN)
+        t.R.x -= 0.01;
+}
 
 void InitApp()
 {
     PerfMarker("Init", 0xFFFF0000);
     //myBar = TwNewBar("Options");
-
-    mvpMat.lookAt(vec3f(0, 0, 0), vec3f(1, -1, -1), vec3f(1,1,1));
+    INPUT_f_keyDown(keyDownHandler);
 
     glGenTextures(1, &texobj);
     glBindTexture(GL_TEXTURE_2D, texobj);
@@ -71,7 +83,8 @@ void InitApp()
 void RenderApp()
 {
     perfMarkerStart("Frame");
-    glUniformMatrix4fv(mvploc, 1, GL_FALSE, mvpMat.e);
+    t.updateMat();
+    glUniformMatrix4fv(mvploc, 1, GL_FALSE, t.mat.e);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (size_t i = 0; i < 20; i++)
     {

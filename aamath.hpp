@@ -106,12 +106,12 @@ namespace aamath
 
     typedef vec2<float> vec2f;
     typedef vec2<int> vec2i;
-}
 
-template<typename T>
-float dot(const aamath::vec2<T>& a, const aamath::vec2<T>& b)
-{
-    return (a.x*b.x + a.y*b.y);
+    template<typename T>
+    float dot(const vec2<T>& a, const vec2<T>& b)
+    {
+        return (a.x*b.x + a.y*b.y);
+    }
 }
 
 // =============================================================================
@@ -209,18 +209,18 @@ namespace aamath
 
     typedef vec3<float> vec3f;
     typedef vec3<int> vec3i;
-}
 
-template<typename T>
-float dot(const aamath::vec3<T>& a, const aamath::vec3<T>& b)
-{
-    return (a.x*b.x + a.y*b.y + a.z*b.z);
-}
+    template<typename T>
+    float dot(const vec3<T>& a, const vec3<T>& b)
+    {
+        return (a.x*b.x + a.y*b.y + a.z*b.z);
+    }
 
-template<typename T>
-aamath::vec3<T> cross(const aamath::vec3<T>& a, const aamath::vec3<T>& b)
-{
-    return aamath::vec3<T>(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x);
+    template<typename T>
+    vec3<T> cross(const vec3<T>& a, const vec3<T>& b)
+    {
+        return vec3<T>(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x);
+    }
 }
 
 // =============================================================================
@@ -324,12 +324,101 @@ namespace aamath
 
     typedef vec4<float> vec4f;
     typedef vec4<int> vec4i;
+
+    template<typename T>
+    float dot(const vec4<T>& a, const vec4<T>& b)
+    {
+        return (a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w);
+    }
 }
 
-template<typename T>
-float dot(const aamath::vec4<T>& a, const aamath::vec4<T>& b)
+// =============================================================================
+// === euler order
+// =============================================================================
+
+namespace aamath
 {
-    return (a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w);
+    enum euler { XYZ, XZY, YXZ, YZX, ZXY, ZYX };
+}
+
+// =============================================================================
+// === quaternion
+// =============================================================================
+
+namespace aamath
+{
+    struct quaternion
+    {
+        float x, y, z, w;
+
+        quaternion(float x = 0, float y = 0, float z = 0, float w = 1)
+            : x(x), y(y), z(z), w(w)
+        {}
+
+        quaternion& set(float _x = 0, float _y = 0, float _z = 0, float _w = 1)
+        {
+            x = _x;
+            y = _y;
+            z = _z;
+            w = _w;
+            return *this;
+        }
+
+        quaternion& setFromEuler(euler order, vec3f v)
+        {
+            float c1 = cos(v.x / 2);
+            float c2 = cos(v.y / 2);
+            float c3 = cos(v.z / 2);
+            float s1 = sin(v.x / 2);
+            float s2 = sin(v.y / 2);
+            float s3 = sin(v.z / 2);
+
+            if (order == XYZ)
+            {
+                x = s1 * c2 * c3 + c1 * s2 * s3;
+                y = c1 * s2 * c3 - s1 * c2 * s3;
+                z = c1 * c2 * s3 + s1 * s2 * c3;
+                w = c1 * c2 * c3 - s1 * s2 * s3;
+            }
+            else if (order == YXZ)
+            {
+                x = s1 * c2 * c3 + c1 * s2 * s3;
+                y = c1 * s2 * c3 - s1 * c2 * s3;
+                z = c1 * c2 * s3 - s1 * s2 * c3;
+                w = c1 * c2 * c3 + s1 * s2 * s3;
+            }
+            else if (order == ZXY)
+            {
+                x = s1 * c2 * c3 - c1 * s2 * s3;
+                y = c1 * s2 * c3 + s1 * c2 * s3;
+                z = c1 * c2 * s3 + s1 * s2 * c3;
+                w = c1 * c2 * c3 - s1 * s2 * s3;
+            }
+            else if (order == ZYX)
+            {
+                x = s1 * c2 * c3 - c1 * s2 * s3;
+                y = c1 * s2 * c3 + s1 * c2 * s3;
+                z = c1 * c2 * s3 - s1 * s2 * c3;
+                w = c1 * c2 * c3 + s1 * s2 * s3;
+            }
+            else if (order == YZX)
+            {
+                x = s1 * c2 * c3 + c1 * s2 * s3;
+                y = c1 * s2 * c3 + s1 * c2 * s3;
+                z = c1 * c2 * s3 - s1 * s2 * c3;
+                w = c1 * c2 * c3 - s1 * s2 * s3;
+            }
+            else if (order == XZY)
+            {
+                x = s1 * c2 * c3 - c1 * s2 * s3;
+                y = c1 * s2 * c3 - s1 * c2 * s3;
+                z = c1 * c2 * s3 + s1 * s2 * c3;
+                w = c1 * c2 * c3 + s1 * s2 * s3;
+            }
+
+            return *this;
+        }
+    };
 }
 
 // =============================================================================
@@ -602,16 +691,61 @@ namespace aamath
             return *this;
         }
 
+        mat4& setRotationFromQuaternion(quaternion& q)
+        {
+
+            float x = q.x, y = q.y, z = q.z, w = q.w;
+            float x2 = x + x, y2 = y + y, z2 = z + z;
+            float xx = x * x2, xy = x * y2, xz = x * z2;
+            float yy = y * y2, yz = y * z2, zz = z * z2;
+            float wx = w * x2, wy = w * y2, wz = w * z2;
+
+            e[0] = 1 - (yy + zz);
+            e[4] = xy - wz;
+            e[8] = xz + wy;
+
+            e[1] = xy + wz;
+            e[5] = 1 - (xx + zz);
+            e[9] = yz - wx;
+
+            e[2] = xz - wy;
+            e[6] = yz + wx;
+            e[10] = 1 - (xx + yy);
+
+            // last column
+            e[3] = 0;
+            e[7] = 0;
+            e[11] = 0;
+
+            // bottom row
+            e[12] = 0;
+            e[13] = 0;
+            e[14] = 0;
+            e[15] = 1;
+
+            return *this;
+        }
+
         mat4& setScale(T x, T y, T z)
         {
-            set(
+            e[0] *= x; e[4] *= y; e[8] *= z;
+            e[1] *= x; e[5] *= y; e[9] *= z;
+            e[2] *= x; e[6] *= y; e[10] *= z;
+            e[3] *= x; e[7] *= y; e[11] *= z;
 
-                x, 0, 0, 0,
-                0, y, 0, 0,
-                0, 0, z, 0,
-                0, 0, 0, 1
+            return *this;
+        }
 
-                );
+        mat4& setScale(vec3<T> v)
+        {
+            return setScale(v.x, v.y, v.z);
+        }
+
+        mat4& compose(vec3f t, quaternion r, vec3f s)
+        {
+            setRotationFromQuaternion(r);
+            setScale(s);
+            setTranslate(t);
 
             return *this;
         }
@@ -619,4 +753,29 @@ namespace aamath
 
     typedef mat4<float> mat4f;
     typedef mat4<int> mat4i;
+}
+
+// =============================================================================
+// === transform
+// =============================================================================
+
+namespace aamath
+{
+    struct transform
+    {
+        vec3f R;
+        vec3f T;
+        vec3f S;
+        euler order;
+        mat4f mat;
+
+        transform() : S(1, 1, 1), order(XYZ) {};
+
+        void updateMat()
+        {
+            quaternion q;
+            q.setFromEuler(order, R);
+            mat.compose(T, q, S);
+        }
+    };
 }

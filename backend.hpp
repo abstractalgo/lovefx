@@ -3,7 +3,7 @@
 // <options> ---------------------------------------------------------------------------
 #define USE_CONSOLE_BACKEND
 //#define USE_NVTX_BACKEND
-#define USE_ANTTWBAR_BACKEND
+//#define USE_ANTTWBAR_BACKEND
 #define ANIMATE_BACKEND
 // </options> --------------------------------------------------------------------------
 
