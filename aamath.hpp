@@ -195,8 +195,11 @@ namespace aamath
         }
         vec3& normalize()
         {
-            float l = len();
-            return ((*this) / l);
+            float inv = 1.0f / len();
+            x *= inv;
+            y *= inv;
+            z *= inv;
+            return *this;
         }
         vec3& abs()
         {
@@ -448,17 +451,16 @@ namespace aamath
 
 namespace aamath
 {
-    template<typename T>
     struct mat4
     {
-        T e[16];
+        float e[16];
 
-        T& operator[](int idx)
+        float& operator[](int idx)
         {
             return e[idx];
         }
 
-        void set(T jj, T jd, T jt, T jc, T dj, T dd, T dt, T dc, T tj, T td, T tt, T tc, T cj, T cd, T ct, T cc)
+        void set(float jj, float jd, float jt, float jc, float dj, float dd, float dt, float dc, float tj, float td, float tt, float tc, float cj, float cd, float ct, float cc)
         {
             e[0] = jj; e[1] = jd; e[2] = jt; e[3] = jc;
             e[4] = dj; e[5] = dd; e[6] = dt; e[7] = dc;
@@ -484,7 +486,7 @@ namespace aamath
             e[12] = 0; e[13] = 0; e[14] = 0; e[15] = 1;
         }
 
-        mat4(const mat4<T>& m)
+        mat4(const mat4& m)
         {
             for (uint8_t i = 0; i < 16; i++) e[i] = m.e[i];
         }
@@ -535,37 +537,57 @@ namespace aamath
             return *this;
         }
 
-        mat4& lookAt(const vec3<T> eye, const vec3<T> target, const vec3<T> up)
+        mat4& lookAt(const vec3f& eye, const vec3f& target, const vec3f& up)
         {
-            vec3<T> z = (eye - target).normalize();
-
-            if (z.len() == 0)
-                z.z = 1;
-
-            vec3<T> x = cross(up, z).normalize();
-
-            if (x.len() == 0) {
-                z.x += 0.0001f;
-                x = cross(up, z).normalize();
+            /*vec3f x, y, z;
+            z = (eye - target).normalize();
+            if (z.len() == 0) { z.z = 1; }
+            x = (cross(up, z)).normalize();
+            if (x.len() == 0)
+            {
+                z.x += 0.0001;
+                x = (cross(up, z)).normalize();
             }
-
-            vec3<T> y = cross(z, x);
+            y = cross(z, x);
 
             e[0] = x.x; e[4] = y.x; e[8] = z.x;
             e[1] = x.y; e[5] = y.y; e[9] = z.y;
             e[2] = x.z; e[6] = y.z; e[10] = z.z;
 
+            */
+
+            /*vec3f f = (target - eye).normalize();
+            vec3f u = vec3f(up).normalize();
+            vec3f s = cross(f, u);
+            u = cross(s, f);
+            e[0] = s.x; e[1] = s.y; e[2] = s.z; e[3] = -eye.x;
+            e[4] = u.x; e[5] = u.y; e[6] = u.z; e[7] = -eye.y;
+            e[8] = -f.x; e[9] = -f.y; e[10] = -f.z; e[11] = -eye.z;
+            e[12] = 0; e[13] = 0; e[14] = 0; e[15] = 1;
+            */
+
+            vec3f zaxis = (target - eye).normalize();
+            vec3f xaxis = (cross(up, zaxis)).normalize();
+            vec3f yaxis = cross(zaxis, xaxis);
+
+            e[0] = xaxis.x;             e[1] = yaxis.x;             e[2] = zaxis.x;             e[3] = 0;
+            e[4] = xaxis.y;             e[5] = yaxis.y;             e[6] = zaxis.y;             e[7] = 0;
+            e[8] = xaxis.z;             e[9] = yaxis.z;             e[10] = zaxis.z;            e[11] = 0;
+            e[12] = -dot(xaxis, eye);   e[13] = -dot(yaxis, eye);   e[14] = -dot(zaxis, eye);   e[15] = 1;
+
+            //transpose();
             return *this;
+            
         }
 
-        vec4<T> operator*(vec4<T>& v)
+        vec4f operator*(vec4f& v)
         {
             float x = v.x;
             float y = v.y;
             float z = v.z;
             float w = v.w;
 
-            vec4<T> res;
+            vec4f res;
 
             res.x = e[0] * x + e[4] * y + e[8] * z + e[12] * w;
             res.y = e[1] * x + e[5] * y + e[9] * z + e[13] * w;
@@ -575,9 +597,9 @@ namespace aamath
             return res;
         }
 
-        vec4<T> operator*(vec3<T>& v)
+        vec4f operator*(vec3f& v)
         {
-            return (*this)*vec4<T>({ v.x, v.y, v.z, 1 });
+            return (*this)*vec4f({ v.x, v.y, v.z, 1 });
         }
 
         mat4& perspectiveCamera(float fov, float aspect, float _near, float _far)
@@ -598,9 +620,9 @@ namespace aamath
             return orthographic(cx - dx, cx + dx, cy + dy, cy - dy, _near, _far);
         }
 
-        mat3<T> get3x3() const
+        mat3f get3x3() const
         {
-            mat3<T> m;
+            mat3f m;
             m[0] = e[0];
             m[1] = e[1];
             m[2] = e[2];
@@ -613,7 +635,7 @@ namespace aamath
             return m;
         }
 
-        mat4& translate(vec3<T>& v)
+        mat4& translate(vec3f& v)
         {
             e[12] += v.x;
             e[13] += v.y;
@@ -621,7 +643,7 @@ namespace aamath
             return *this;
         }
 
-        mat4& setTranslate(vec3<T>& v)
+        mat4& setTranslate(vec3f& v)
         {
             e[12] = v.x;
             e[13] = v.y;
@@ -671,7 +693,7 @@ namespace aamath
             return *this;
         }
 
-        mat4& setRotationAxis(vec3<T>& axis, float angle)
+        mat4& setRotationAxis(vec3f& axis, float angle)
         {
             float c = cos(angle);
             float s = sin(angle);
@@ -726,7 +748,7 @@ namespace aamath
             return *this;
         }
 
-        mat4& setScale(T x, T y, T z)
+        mat4& setScale(float x, float y, float z)
         {
             e[0] *= x; e[4] *= y; e[8] *= z;
             e[1] *= x; e[5] *= y; e[9] *= z;
@@ -736,7 +758,7 @@ namespace aamath
             return *this;
         }
 
-        mat4& setScale(vec3<T> v)
+        mat4& setScale(vec3f v)
         {
             return setScale(v.x, v.y, v.z);
         }
@@ -750,9 +772,6 @@ namespace aamath
             return *this;
         }
     };
-
-    typedef mat4<float> mat4f;
-    typedef mat4<int> mat4i;
 }
 
 // =============================================================================
@@ -767,7 +786,7 @@ namespace aamath
         vec3f T;
         vec3f S;
         euler order;
-        mat4f mat;
+        mat4 mat;
 
         transform() : S(1, 1, 1), order(XYZ) {};
 

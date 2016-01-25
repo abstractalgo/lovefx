@@ -10,12 +10,14 @@ using namespace aamath;
 //TwBar*      myBar;
 LFXprogram  prog;
 LFXuloc     texloc;
-LFXuloc     mvploc;
+LFXuloc     modelMatLoc, viewMatLoc, projMatLoc;
 LFXtex2d    texobj;
 std::vector<LFXmesh> meshes;
 std::vector<tinyobj::material_t> materials;
 
 transform t;
+mat4 projMat, viewMat;
+float time = 0;
 
 void keyDownHandler(unsigned int key)
 {
@@ -45,8 +47,9 @@ void InitApp()
 
     program::createFromFiles(prog, "effects\\res\\shaders\\sponza.vs", 0, 0, 0, "effects\\res\\shaders\\sponza.fs", 0);
     program::log(prog);
-    program::location(prog, "mvp", mvploc);
-    //program::location(prog, "tex", texloc);
+    program::location(prog, "modelMat", modelMatLoc);
+    program::location(prog, "viewMat", viewMatLoc);
+    program::location(prog, "projMat", projMatLoc);
 
     perfMarkerStartEx("OBJ parsing", 0xFF88FF88);
     std::vector<tinyobj::shape_t> shapes;
@@ -55,16 +58,15 @@ void InitApp()
     bool ret = tinyobj::LoadObj(shapes, materials, err, inputfile.c_str(), "effects\\res\\crytek_sponza\\");
     if (!err.empty()) { printf("%s\n",err); }
     if (!ret) { exit(1); }
-    for (size_t i = 0; i < materials.size(); i++)
-    {
-        printf("material[%ld].name = %s\n", i, materials[i].name.c_str());
-        printf("  material.map_Kd = %s\n", materials[i].diffuse_texname.c_str());
-    }
     perfMarkerEnd();
 
     perfMarkerStartEx("Buidling OGL data", 0xFF8888FF);
     for (size_t i = 0; i < shapes.size(); i++)
     {
+        assert(shapes[i].mesh.indices.size() % 3 == 0);
+        assert(shapes[i].mesh.positions.size() == shapes[i].mesh.normals.size());
+        assert(shapes[i].mesh.positions.size() / 3 * 2 == shapes[i].mesh.texcoords.size());
+
         LFXmesh msh;
         mesh::create(msh);
         mesh::addVertexBuffer(msh, "iPos", prog, shapes[i].mesh.positions.size() * sizeof(float), 3, GL_FLOAT, shapes[i].mesh.positions.data());
@@ -77,20 +79,35 @@ void InitApp()
     perfMarkerEnd();
 
     glClearColor(0.0f, 0.2f, 0.4f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
     program::use(prog);
+    float aspect; utils::getAspectRatio(aspect);
+    projMat.perspectiveCamera(45, aspect, 0.0001, 1000);
 }
 
 void RenderApp()
 {
     perfMarkerStart("Frame");
+    // model
     t.updateMat();
-    glUniformMatrix4fv(mvploc, 1, GL_FALSE, t.mat.e);
+    glUniformMatrix4fv(modelMatLoc, 1, GL_FALSE, t.mat.e);
+    // view
+    time += 0.03;
+    float x = cos(time) * 20.0f;
+    float z = sin(time) * 20.0f;
+    viewMat.lookAt(vec3f(x,20,z), vec3f(0, 0, 0), vec3f(0, 1, 0));
+    glUniformMatrix4fv(viewMatLoc, 1, GL_FALSE, viewMat.e);
+    // projection
+    glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, projMat.e);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    for (size_t i = 0; i < 20; i++)
+    for (size_t i = 0; i < meshes.size(); i++)
     {
         mesh::draw(meshes[i]);
     }
     perfMarkerEnd();
+
+    LFX_ERRCHK();
 }
 
 void CleanupApp()
