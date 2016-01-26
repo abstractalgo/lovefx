@@ -19,5 +19,5 @@ void main()
     			* vec4(iPos*0.0003,1.);
 
     uv = iUV;
-    nor = iNor;
+    nor = normalize(iNor);
 }

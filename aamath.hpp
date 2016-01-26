@@ -540,9 +540,9 @@ namespace aamath
             return *this;
         }
 
-        mat4& lookAt(const vec3f& eye, const vec3f& view, const vec3f& up = vec3f(0, 1, 0))
+        mat4& lookAt(const vec3f& eye, const vec3f& target, const vec3f& up = vec3f(0, 1, 0))
         {
-            vec3f zaxis = (view - eye).normalize();
+            vec3f zaxis = (eye - target).normalize();
             vec3f xaxis = (cross(up, zaxis)).normalize();
             vec3f yaxis = cross(zaxis, xaxis);
 
@@ -551,11 +551,6 @@ namespace aamath
             e[8] = xaxis.z;             e[9] = yaxis.z;             e[10] = zaxis.z;            e[11] = 0;
             e[12] = -dot(xaxis, eye);   e[13] = -dot(yaxis, eye);   e[14] = -dot(zaxis, eye);   e[15] = 1;
             return *this;
-        }
-
-        mat4& lookAtFrom(const vec3f& from, const vec3f at, const vec3f& up = vec3f(0, 1, 0))
-        {
-            return lookAt(from, from-at, up);
         }
 
         vec4f operator*(vec4f& v)
@@ -775,4 +770,61 @@ namespace aamath
             mat.compose(T, q, S);
         }
     };
+}
+
+// =============================================================================
+// === camera
+// =============================================================================
+
+namespace aamath
+{
+    struct fps_camera
+    {
+        vec3f position;
+        float horizontalAngle;
+        float verticalAngle;
+        float initialFOV;
+        float speed;
+        float mouseSpeed;
+
+        vec3f dir, right;
+        mat4 mat;
+
+        fps_camera()
+            : horizontalAngle(M_PI)
+            , verticalAngle(0.0f)
+            , initialFOV(45.0f)
+            , speed(3.0f)
+            , mouseSpeed(0.005f)
+            , dir(1,0,0)
+            , right(0,0,1)
+        {}
+
+        void updateMatrix(void)
+        {
+            dir = vec3f(cos(verticalAngle) * sin(horizontalAngle),
+                sin(verticalAngle),
+                cos(verticalAngle) * cos(horizontalAngle)).normalize();
+
+            right = vec3f(sin(horizontalAngle - M_PI / 2.0f),
+                0.0f,
+                cos(horizontalAngle - M_PI / 2.0f)).normalize();
+
+            vec3f up = cross(right, dir);
+
+            mat.lookAt(position, position + dir, up);
+        }
+
+        void update(float dx, float dy, float dt)
+        {
+            horizontalAngle += mouseSpeed * dt * dx;
+            verticalAngle += mouseSpeed * dt * dy;
+
+            updateMatrix();
+        }
+
+        
+    };
+
+
 }

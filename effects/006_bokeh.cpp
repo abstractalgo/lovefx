@@ -20,20 +20,49 @@ std::vector<tinyobj::material_t> materials;
 transform t;
 mat4 projMat, viewMat;
 float time = 0;
+fps_camera camera;
 
-glm::mat4 gprojMat, gviewMat;
+void mouseMoveHandler(int, int, unsigned int x, unsigned int y)
+{
+    static unsigned int last_x, last_y;
+    float dx = (float)(x - last_x);
+    float dy = (float)(y - last_y);
+    float dt = 0.01f;
+    camera.update(dx, dy, dt);
+
+    /*printf("\r              ");
+    printf("\r%d %d", x - last_x, y - last_y);*/
+    last_x = x;
+    last_y = y;
+    //RECT rect;
+    //GetWindowRect(g_hWnd, &rect);
+    //ClipCursor(&rect);
+
+    //SetCursorPos((rect.left+rect.right)/2, (rect.top+rect.bottom)/2);
+}
 
 void keyDownHandler(unsigned int key)
 {
     if (key == INPUT_KEY_LEFT)
-        t.R.y += 0.01;
+        camera.horizontalAngle += 0.035f;
     if (key == INPUT_KEY_RIGHT)
-        t.R.y -= 0.01;
+        camera.horizontalAngle -= 0.035f;
 
     if (key == INPUT_KEY_UP)
-        t.R.x += 0.01;
+        camera.verticalAngle += 0.035f;
     if (key == INPUT_KEY_DOWN)
-        t.R.x -= 0.01;
+        camera.verticalAngle -= 0.035f;
+
+    if (key == INPUT_KEY_W)
+        camera.position += camera.dir * 0.008f;
+    if (key == INPUT_KEY_S)
+        camera.position -= camera.dir * 0.008f;
+    if (key == INPUT_KEY_D)
+        camera.position += camera.right * 0.008f;
+    if (key == INPUT_KEY_A)
+        camera.position -= camera.right * 0.008f;
+
+    camera.updateMatrix();
 }
 
 void InitApp()
@@ -41,6 +70,7 @@ void InitApp()
     PerfMarker("Init", 0xFFFF0000);
     //myBar = TwNewBar("Options");
     INPUT_f_keyDown(keyDownHandler);
+    //INPUT_f_mouseMove(mouseMoveHandler);
 
     glGenTextures(1, &texobj);
     glBindTexture(GL_TEXTURE_2D, texobj);
@@ -84,12 +114,12 @@ void InitApp()
 
     glClearColor(0.0f, 0.2f, 0.4f, 1.0f);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     program::use(prog);
     float aspect; utils::getAspectRatio(aspect);
-    //projMat.perspectiveCamera(45, aspect, 0.0001, 1000);
-    gprojMat = glm::perspective(45.0f, aspect, 0.001f, 100.0f);
+    projMat.perspectiveCamera(45.0f, aspect, 0.0001f, 10.0f);
+
 }
-float h[16];
 void RenderApp()
 {
     perfMarkerStart("Frame");
@@ -98,19 +128,14 @@ void RenderApp()
     glUniformMatrix4fv(modelMatLoc, 1, GL_FALSE, t.mat.e);
     // view
     time += 0.003;
-    float x = cos(time) * 1.0f;
-    float z = sin(time) * 1.0f;
+    float x = cos(time) * 2.0f;
+    float z = sin(time) * 2.0f;
 
     viewMat.lookAt(vec3f(x, 2.0f, z), vec3f(0.0f,0.0f,0.0f));
     //viewMat.lookAtFrom(vec3f(0.0f, 0.2f, 0.0f), vec3f(x, 0.0f, z));
-
-    gviewMat = glm::lookAt(glm::vec3(x, 2, z), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-    for (int i = 0; i < 16; i++) h[i] = gviewMat[i / 4][i % 4];
-
-    glUniformMatrix4fv(viewMatLoc, 1, GL_FALSE, viewMat.e);
+    glUniformMatrix4fv(viewMatLoc, 1, GL_FALSE, camera.mat.e);
     // projection
-    for (int i = 0; i < 16; i++) h[i] = gprojMat[i/4][i%4];
-    glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, h);
+    glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, projMat.e);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (size_t i = 0; i < meshes.size(); i++)
@@ -130,6 +155,9 @@ void CleanupApp()
 
 void mainApp()
 {
+    
+
+    
 }
 
 #endif
