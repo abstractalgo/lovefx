@@ -229,7 +229,7 @@ HRESULT lovefx::file::loadTXT(const char* filename, std::string& content)
     content = (str);
     return S_OK;
 }
-HRESULT lovefx::file::loadBMP(const char* filename, GLenum target, GLuint image)
+HRESULT lovefx::file::loadBMP(const char* filename, GLenum target, GLuint image=0)
 {
     unsigned char header[54];
     unsigned int dataPos;
@@ -261,8 +261,8 @@ HRESULT lovefx::file::loadBMP(const char* filename, GLenum target, GLuint image)
     fread(data, 1, imageSize, file);
     fclose(file);
 
-    glBindTexture(target, image);
-    glTexImage2D(target, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    if(image) glBindTexture(target, image);
+    glTexImage2D(target, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
 
     delete[] data;
 

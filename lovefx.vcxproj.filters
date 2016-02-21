@@ -10,7 +10,7 @@
     <ClInclude Include="startupfx.h">
       <Filter>lovefx</Filter>
     </ClInclude>
-    <ClInclude Include="aamath.hpp">
+    <ClInclude Include="thirdparty\aamath.hpp">
       <Filter>lovefx</Filter>
     </ClInclude>
   </ItemGroup>
@@ -39,6 +39,9 @@
       <Filter>effects</Filter>
     </ClCompile>
     <ClCompile Include="effects\006_bokeh.cpp">
+      <Filter>effects</Filter>
+    </ClCompile>
+    <ClCompile Include="effects\007_gl.cpp">
       <Filter>effects</Filter>
     </ClCompile>
   </ItemGroup>

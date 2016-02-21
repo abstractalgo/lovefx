@@ -2,7 +2,7 @@
 #if (STARTUPFX_ID==6)
 #include "..\\lovefx.hpp"
 #include "..\\thirdparty\\tiny_obj_loader.hpp"
-#include "..\\aamath.hpp"
+#include "..\\thirdparty\\aamath.hpp"
 #include "..\\thirdparty\\\glm\\glm.hpp"
 #include "..\\thirdparty\glm\gtc\matrix_transform.hpp"
 
@@ -47,7 +47,6 @@ void keyDownHandler(unsigned int key)
         camera.horizontalAngle += 0.035f;
     if (key == INPUT_KEY_RIGHT)
         camera.horizontalAngle -= 0.035f;
-
     if (key == INPUT_KEY_UP)
         camera.verticalAngle += 0.035f;
     if (key == INPUT_KEY_DOWN)
@@ -159,5 +158,4 @@ void mainApp()
 
     
 }
-
 #endif
