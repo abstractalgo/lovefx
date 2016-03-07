@@ -44,5 +44,8 @@
     <ClCompile Include="effects\007_gl.cpp">
       <Filter>effects</Filter>
     </ClCompile>
+    <ClCompile Include="effects\008_res.cpp">
+      <Filter>effects</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

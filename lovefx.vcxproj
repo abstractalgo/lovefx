@@ -93,6 +93,7 @@
     <ClCompile Include="effects\005_parallax.cpp" />
     <ClCompile Include="effects\006_bokeh.cpp" />
     <ClCompile Include="effects\007_gl.cpp" />
+    <ClCompile Include="effects\008_res.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
