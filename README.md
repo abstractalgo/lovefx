@@ -31,3 +31,19 @@ collection of opengl effects
 - compute
 - instancing (perf)
 - pipelines
+
+--------
+
+- mt system
+- rendering backend abstraction
+    - api
+        - opengl
+        - d3d
+        - vulkan
+    - shader compilation
+- rendering thread queue
+
+- model loading
+- transformations
+- event system
+- clustered forward pipeline + deferred for post-processing
